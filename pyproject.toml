@@ -1,0 +1,107 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kubernetes-assistant"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "spi", email = "spi3@pm.me" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "kubernetes-mcp-server",
+  "strands-agents",
+  "strands-agents-tools",
+  "strands-agents[ollama]",
+  "discord.py"
+]
+
+[project.urls]
+Documentation = "https://github.com/spi/kubernetes-assistant#readme"
+Issues = "https://github.com/spi/kubernetes-assistant/issues"
+Source = "https://github.com/spi/kubernetes-assistant"
+
+[tool.hatch.version]
+path = "src/kubernetes_assistant/__about__.py"
+
+[tool.hatch.envs.default]
+dependencies = []
+
+[tool.hatch.envs.default.scripts]
+agent = "python -m kubernetes_assistant"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/kubernetes_assistant tests}"
+
+[tool.hatch.envs.lint]
+extra-dependencies = [
+  "ruff>=0.3.0",
+]
+[tool.hatch.envs.lint.scripts]
+check = "ruff check {args:src/kubernetes_assistant tests}"
+format = "ruff format {args:src/kubernetes_assistant tests}"
+fix = "ruff check --fix {args:src/kubernetes_assistant tests}"
+all = [
+  "ruff check --fix {args:src/kubernetes_assistant tests}",
+  "ruff format {args:src/kubernetes_assistant tests}",
+]
+
+[tool.coverage.run]
+source_pkgs = ["kubernetes_assistant", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/kubernetes_assistant/__about__.py",
+]
+
+[tool.coverage.paths]
+kubernetes_assistant = ["src/kubernetes_assistant", "*/kubernetes-assistant/src/kubernetes_assistant"]
+tests = ["tests", "*/kubernetes-assistant/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "UP",  # pyupgrade
+]
+ignore = [
+  "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kubernetes_assistant"]
