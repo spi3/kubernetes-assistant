@@ -1,5 +1,6 @@
 import discord
 
+
 def discord_message_formatter(message: discord.Message) -> str:
     """Format the agent result into a Discord-compatible message string."""
     embeds = message.embeds
@@ -8,6 +9,7 @@ def discord_message_formatter(message: discord.Message) -> str:
     author = message.author.display_name
 
     return f"""
-[Message from {author} at {timestamp}]: 
+[Message from {author} at {timestamp}]:
+{embeds}
 {content}
 """

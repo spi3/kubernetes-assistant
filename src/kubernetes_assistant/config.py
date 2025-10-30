@@ -1,15 +1,16 @@
-import os
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
-from pydantic import BaseModel, Field
 
-class ModelConfig(BaseModel):
-    model_host: str = Field(default=os.environ.get("MODEL_HOST", "http://localhost:11434"))
-    model_id: str = Field(default=os.environ.get("MODEL_ID", "qwen3:latest"))
+class ModelConfig(BaseSettings):
+    model_host: str = Field(default="http://localhost:11434", alias="MODEL_HOST")
+    model_id: str = Field(default="qwen3:latest", alias="MODEL_ID")
 
-class KubernetesAssistantConfig(BaseModel):
+
+class KubernetesAssistantConfig(BaseSettings):
     llm_config: ModelConfig = Field(default_factory=ModelConfig)
-    cluster_name: str = Field(default=os.environ.get("CLUSTER_NAME", "The Cluster"))
-    agent_name: str = Field(default=os.environ.get("AGENT_NAME", "KubeBot"))
-    agent_role: str = Field(default=os.environ.get("AGENT_ROLE", "intern system administrator"))
-    kubeconfig_path: str = Field(default=os.environ.get("KUBE_CONFIG_PATH", "./k3s.yaml"))
-    discord_token: str = Field(default=os.environ["DISCORD_TOKEN"])
+    cluster_name: str = Field(default="The Cluster", alias="CLUSTER_NAME")
+    agent_name: str = Field(default="KubeBot", alias="AGENT_NAME")
+    agent_role: str = Field(default="intern system administrator", alias="AGENT_ROLE")
+    kubeconfig_path: str = Field(default="./k3s.yaml", alias="KUBE_CONFIG_PATH")
+    discord_token: str = Field(alias="DISCORD_TOKEN")

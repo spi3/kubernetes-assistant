@@ -29,7 +29,8 @@ dependencies = [
   "strands-agents",
   "strands-agents-tools",
   "strands-agents[ollama]",
-  "discord.py"
+  "discord.py",
+  "pydantic-settings"
 ]
 
 [project.urls]
@@ -45,6 +46,8 @@ dependencies = []
 
 [tool.hatch.envs.default.scripts]
 agent = "python -m kubernetes_assistant"
+docker-build = "docker build -t kubernetes-assistant:latest ."
+docker-build-tag = "docker build -t kubernetes-assistant:{args} ."
 
 [tool.hatch.envs.types]
 extra-dependencies = [
@@ -65,6 +68,19 @@ all = [
   "ruff check --fix {args:src/kubernetes_assistant tests}",
   "ruff format {args:src/kubernetes_assistant tests}",
 ]
+
+[tool.hatch.envs.test]
+extra-dependencies = [
+  "pytest>=7.0.0",
+  "pytest-asyncio>=0.21.0",
+  "pytest-timeout>=2.1.0",
+  "kubernetes>=28.0.0",
+  "pyyaml>=6.0",
+  "requests>=2.31.0",
+]
+[tool.hatch.envs.test.scripts]
+integration = "pytest tests/test_integration_docker_compose.py -v -s"
+all = "pytest tests/ -v"
 
 [tool.coverage.run]
 source_pkgs = ["kubernetes_assistant", "tests"]

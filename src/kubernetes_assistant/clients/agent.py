@@ -33,7 +33,13 @@ class KubernetesAssistantAgent:
             tools = stdio_mcp_client.list_tools_sync()
 
             # Create an agent using the Ollama model
-            agent = Agent(model=self.model, tools=tools, system_prompt=agent_prompt(self.config.agent_name, self.config.cluster_name, self.config.agent_role))
+            agent = Agent(
+                model=self.model,
+                tools=tools,
+                system_prompt=agent_prompt(
+                    self.config.agent_name, self.config.cluster_name, self.config.agent_role
+                ),
+            )
 
             # Use the agent
             agent_result = agent(input)  # Prints model output to stdout by default

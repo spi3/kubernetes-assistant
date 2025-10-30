@@ -5,16 +5,14 @@ import os
 from strands.models.ollama import OllamaModel
 
 from kubernetes_assistant.clients.agent import KubernetesAssistantAgent
-from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.clients.discord import DiscordClient
+from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.utils.discord_message_formatter import discord_message_formatter
 
 
-async def main_async() -> None:
+async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
     logger = logging.getLogger(__name__)
-
-    kube_assistant_config = KubernetesAssistantConfig()
 
     model = OllamaModel(
         host=kube_assistant_config.llm_config.model_host,  # Ollama server address
@@ -45,7 +43,8 @@ async def main_async() -> None:
 
 
 def main() -> None:
-    asyncio.run(main_async())
+    config = KubernetesAssistantConfig()
+    asyncio.run(main_async(config))
 
 
 if __name__ == "__main__":
