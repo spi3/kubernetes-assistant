@@ -1,0 +1,66 @@
+name: Auto Release on Main Push
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE.txt'
+      - '.gitignore'
+      - '.github/**'
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate version tag
+        id: version
+        run: |
+          # Generate date-based version: YYYY.MM.DD.BUILD_NUMBER
+          DATE=$(date +%Y.%m.%d)
+
+          # Get today's build number (count of releases with same date prefix)
+          EXISTING_TAGS=$(git tag -l "${DATE}.*" | wc -l)
+          BUILD_NUMBER=$((EXISTING_TAGS + 1))
+
+          VERSION="${DATE}.${BUILD_NUMBER}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+
+      - name: Get commit messages since last release
+        id: changelog
+        run: |
+          # Get the last release tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LAST_TAG" ]; then
+            # First release - get all commits
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # Get commits since last tag
+            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Save to file to handle multiline content
+          echo "$CHANGELOG" > changelog.txt
+          echo "Generated changelog since ${LAST_TAG:-initial commit}"
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          body_path: changelog.txt
+          draft: false
+          prerelease: false

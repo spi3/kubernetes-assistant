@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  kubernetes-assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kubernetes-assistant:latest
+    container_name: kubernetes-assistant
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    volumes:
+      # Mount your kubeconfig file
+      # Update the path on the left side to point to your actual kubeconfig
+      - ./k3s.yaml:/app/config/kubeconfig:ro
+      # Optional: mount additional config directory
+      - ./config:/app/config
+
+    # Optional: if you need to expose any ports
+    # ports:
+    #   - "8080:8080"
+
+    # Optional: if you need to run the container with specific network settings
+    # network_mode: host
+
+    # Optional: resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 1G
+    #     reservations:
+    #       cpus: '0.5'
+    #       memory: 512M
+
+# Optional: custom network
+# networks:
+#   default:
+#     name: kubernetes-assistant-network
