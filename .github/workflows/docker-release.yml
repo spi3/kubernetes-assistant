@@ -29,6 +29,13 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name || inputs.tag }}
 
+      - name: Get Python package version
+        id: python_version
+        run: |
+          VERSION=$(grep -oP '__version__ = "\K[^"]+' src/kubernetes_assistant/__about__.py)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Python package version: ${VERSION}"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -45,12 +52,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Tag with version
+            # Tag with date-based release version (e.g., 2025.10.31.1)
             type=semver,pattern={{version}}
-            # Tag with major.minor
-            type=semver,pattern={{major}}.{{minor}}
-            # Tag with major version
-            type=semver,pattern={{major}}
+            # Tag with Python package version (e.g., 0.0.2)
+            type=raw,value=${{ steps.python_version.outputs.version }}
             # Tag as latest
             type=raw,value=latest
 
