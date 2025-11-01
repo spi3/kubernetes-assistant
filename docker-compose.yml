@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   kubernetes-assistant:
     build:
@@ -13,10 +11,6 @@ services:
       - .env
 
     volumes:
-      # Mount your kubeconfig file
-      # Update the path on the left side to point to your actual kubeconfig
-      - ./k3s.yaml:/app/config/kubeconfig:ro
-      # Optional: mount additional config directory
       - ./config:/app/config
 
     # Optional: if you need to expose any ports
