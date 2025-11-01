@@ -1,13 +1,13 @@
 from mcp import StdioServerParameters, stdio_client
 from strands import Agent
 from strands.agent import AgentResult
+from strands.agent.conversation_manager import SummarizingConversationManager
 from strands.models.model import Model
+from strands.session.file_session_manager import FileSessionManager
 from strands.tools.mcp import MCPClient
 
 from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.prompts.agent_prompt import agent_prompt
-from strands.agent.conversation_manager import SummarizingConversationManager
-from strands.session.file_session_manager import FileSessionManager
 
 
 class KubernetesAssistantAgent:
@@ -42,7 +42,7 @@ class KubernetesAssistantAgent:
                 system_prompt=agent_prompt(
                     self.config.agent_name, self.config.cluster_name, self.config.agent_role
                 ),
-                conversation_manager=SummarizingConversationManager(model=self.model),
+                conversation_manager=SummarizingConversationManager(),
                 session_manager=self.session_manager,
             )
 

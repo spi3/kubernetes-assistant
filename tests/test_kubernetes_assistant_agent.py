@@ -1,12 +1,12 @@
 """Unit tests for KubernetesAssistantAgent class."""
 
-import os
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import MagicMock, Mock, patch, call
 from strands.models.model import Model
 
 from kubernetes_assistant.clients.agent import KubernetesAssistantAgent
-from kubernetes_assistant.config import KubernetesAssistantConfig, ModelConfig
+from kubernetes_assistant.config import KubernetesAssistantConfig
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ class TestKubernetesAssistantAgentInit:
         custom_config = KubernetesAssistantConfig()
 
         with patch('kubernetes_assistant.clients.agent.FileSessionManager') as mock_session_manager:
-            agent = KubernetesAssistantAgent(
+            _agent = KubernetesAssistantAgent(
                 config=custom_config,
                 model=mock_model,
                 session_id=session_id
@@ -140,7 +140,7 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_class.return_value = mock_agent_instance
 
         # Run the method
-        result = agent_instance.run("test input")
+        _result = agent_instance.run("test input")
 
         # Verify MCPClient was created
         mock_mcp_client_class.assert_called_once()
@@ -228,8 +228,8 @@ class TestKubernetesAssistantAgentRun:
             agent_instance.config.agent_role
         )
 
-        # Verify SummarizingConversationManager was created with the model
-        mock_conv_manager.assert_called_once_with(model=agent_instance.model)
+        # Verify SummarizingConversationManager was created without parameters
+        mock_conv_manager.assert_called_once_with()
 
         # Verify Agent was created with correct parameters
         mock_agent_class.assert_called_once_with(
@@ -269,7 +269,7 @@ class TestKubernetesAssistantAgentRun:
         test_input = "What is the status of my pods?"
 
         # Run the method
-        result = agent_instance.run(test_input)
+        _result = agent_instance.run(test_input)
 
         # Verify the agent was called with the input
         mock_agent_instance.assert_called_once_with(test_input)
@@ -417,7 +417,7 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_agent_class.return_value = mock_agent_instance
 
         # Run with empty input
-        result = agent_instance.run("")
+        _result = agent_instance.run("")
 
         # Verify it still calls the agent
         mock_agent_instance.assert_called_once_with("")
@@ -485,7 +485,7 @@ class TestKubernetesAssistantAgentEdgeCases:
         long_input = "What is the status? " * 500
 
         # Run with long input
-        result = agent_instance.run(long_input)
+        _result = agent_instance.run(long_input)
 
         # Verify the agent was called with the full input
         mock_agent_instance.assert_called_once_with(long_input)
