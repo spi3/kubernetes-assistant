@@ -1,4 +1,4 @@
-name: Auto Release on Main Push
+name: Auto Release and Docker Build
 
 on:
   push:
@@ -9,12 +9,20 @@ on:
       - 'LICENSE.txt'
       - '.gitignore'
       - '.github/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  auto-release:
+  release-and-build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout repository
@@ -61,3 +69,54 @@ jobs:
           gh release create ${{ steps.version.outputs.version }} \
             --title "Release ${{ steps.version.outputs.version }}" \
             --notes-file changelog.txt
+
+      - name: Get Python package version
+        id: python_version
+        run: |
+          VERSION=$(grep -oP '__version__ = "\K[^"]+' src/kubernetes_assistant/__about__.py)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Python package version: ${VERSION}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Tag with date-based release version (e.g., 2025.10.31.1)
+            type=raw,value=${{ steps.version.outputs.version }}
+            # Tag with Python package version (e.g., 0.0.4)
+            type=raw,value=${{ steps.python_version.outputs.version }}
+            # Tag as latest
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate artifact attestation
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
