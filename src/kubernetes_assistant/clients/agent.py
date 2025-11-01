@@ -6,12 +6,15 @@ from strands.tools.mcp import MCPClient
 
 from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.prompts.agent_prompt import agent_prompt
+from strands.agent.conversation_manager import SummarizingConversationManager
+from strands.session.file_session_manager import FileSessionManager
 
 
 class KubernetesAssistantAgent:
-    def __init__(self, config: KubernetesAssistantConfig, model: Model):
+    def __init__(self, config: KubernetesAssistantConfig, model: Model, session_id: str):
         self.config = config
         self.model = model
+        self.session_manager = FileSessionManager(session_id=session_id, storage_dir=self.config.config_dir + "/sessions")
 
     def run(self, input: str) -> AgentResult:
         stdio_mcp_client = MCPClient(
@@ -39,6 +42,8 @@ class KubernetesAssistantAgent:
                 system_prompt=agent_prompt(
                     self.config.agent_name, self.config.cluster_name, self.config.agent_role
                 ),
+                conversation_manager=SummarizingConversationManager(model=self.model),
+                session_manager=self.session_manager,
             )
 
             # Use the agent
