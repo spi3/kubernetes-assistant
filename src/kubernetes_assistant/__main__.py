@@ -19,8 +19,6 @@ async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
         model_id=kube_assistant_config.llm_config.model_id,  # Specify which model to use
     )
 
-    agent = KubernetesAssistantAgent(kube_assistant_config, model)
-
     async with DiscordClient(kube_assistant_config.discord_token) as client:
         while True:
             # Block until message received in specific channels
@@ -28,6 +26,7 @@ async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
             formatted_message = discord_message_formatter(message)
             logger.info(f"Received discord message: {formatted_message}")
 
+            agent = KubernetesAssistantAgent(kube_assistant_config, model, f"{message.guild.id}-{message.channel.id}")
             result = agent.run(formatted_message)
             # Handle ContentBlock properly - it might be a TextBlock or other type
             content_block = result.message["content"][0]
