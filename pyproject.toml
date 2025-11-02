@@ -49,39 +49,32 @@ agent = "python -m kubernetes_assistant"
 docker-build = "docker build -t kubernetes-assistant:latest ."
 docker-build-tag = "docker build -t kubernetes-assistant:{args} ."
 
-[tool.hatch.envs.types]
+[tool.hatch.envs.test]
 extra-dependencies = [
   "mypy>=1.0.0",
   "pytest>=7.0.0",
-]
-[tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/kubernetes_assistant tests}"
-
-[tool.hatch.envs.lint]
-extra-dependencies = [
   "ruff>=0.3.0",
-]
-[tool.hatch.envs.lint.scripts]
-check = "ruff check {args:src/kubernetes_assistant tests}"
-format = "ruff format {args:src/kubernetes_assistant tests}"
-fix = "ruff check --fix {args:src/kubernetes_assistant tests}"
-all = [
-  "ruff check --fix {args:src/kubernetes_assistant tests}",
-  "ruff format {args:src/kubernetes_assistant tests}",
-]
-
-[tool.hatch.envs.test]
-extra-dependencies = [
-  "pytest>=7.0.0",
   "pytest-asyncio>=0.21.0",
   "pytest-timeout>=2.1.0",
   "kubernetes>=28.0.0",
   "pyyaml>=6.0",
-  "requests>=2.31.0",
+  "requests>=2.31.0"
 ]
+
 [tool.hatch.envs.test.scripts]
-integration = "pytest tests/test_integration_docker_compose.py -v -s"
-all = "pytest tests/ -v"
+types = "mypy --install-types --non-interactive {args:src/kubernetes_assistant tests}"
+lint = "ruff check {args:src/kubernetes_assistant tests}"
+lint-fix = "ruff check --fix {args:src/kubernetes_assistant tests}"
+format = "ruff format --check {args:src/kubernetes_assistant tests}"
+format-fix = "ruff format {args:src/kubernetes_assistant tests}"
+unit-tests = "pytest tests/ -v"
+
+all = [
+  "types",
+  "lint",
+  "format",
+  "unit-tests"
+]
 
 [tool.coverage.run]
 source_pkgs = ["kubernetes_assistant", "tests"]

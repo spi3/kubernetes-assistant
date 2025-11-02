@@ -27,7 +27,9 @@ async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
             logger.info(f"Received discord message: {formatted_message}")
 
             guild_id = message.guild.id if message.guild else "dm"
-            agent = KubernetesAssistantAgent(kube_assistant_config, model, f"{guild_id}-{message.channel.id}")
+            agent = KubernetesAssistantAgent(
+                kube_assistant_config, model, f"{guild_id}-{message.channel.id}"
+            )
             result = agent.run(formatted_message)
             # Handle ContentBlock properly - it might be a TextBlock or other type
             content_block = result.message["content"][0]

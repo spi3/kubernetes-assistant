@@ -14,7 +14,9 @@ class KubernetesAssistantAgent:
     def __init__(self, config: KubernetesAssistantConfig, model: Model, session_id: str):
         self.config = config
         self.model = model
-        self.session_manager = FileSessionManager(session_id=session_id, storage_dir=self.config.config_dir + "/sessions")
+        self.session_manager = FileSessionManager(
+            session_id=session_id, storage_dir=self.config.config_dir + "/sessions"
+        )
 
     def run(self, input: str) -> AgentResult:
         stdio_mcp_client = MCPClient(
