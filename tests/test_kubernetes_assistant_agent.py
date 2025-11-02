@@ -21,6 +21,8 @@ def mock_config(monkeypatch):
     monkeypatch.setenv("KUBE_CONFIG_PATH", "/test/path/kubeconfig.yaml")
     monkeypatch.setenv("DISCORD_TOKEN", "test-discord-token")
     monkeypatch.setenv("CONFIG_DIR", "/test/config")
+    # Ensure PROMETHEUS_URL is not set for tests
+    monkeypatch.delenv("PROMETHEUS_URL", raising=False)
 
     config = KubernetesAssistantConfig()
     return config

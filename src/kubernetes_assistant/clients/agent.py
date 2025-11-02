@@ -38,7 +38,8 @@ class KubernetesAssistantAgent:
 
         prometheus_mcp_client = None
 
-        if self.config.prometheus_url:
+        if self.config.prometheus_url is not None:
+            prometheus_url: str = self.config.prometheus_url
             prometheus_mcp_client = MCPClient(
                 lambda: stdio_client(
                     StdioServerParameters(
@@ -51,7 +52,7 @@ class KubernetesAssistantAgent:
                             "PROMETHEUS_URL",
                             "ghcr.io/pab1it0/prometheus-mcp-server",
                         ],
-                        env={"PROMETHEUS_URL": self.config.prometheus_url},
+                        env={"PROMETHEUS_URL": prometheus_url},
                     )
                 )
             )
