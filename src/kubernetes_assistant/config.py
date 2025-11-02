@@ -15,3 +15,4 @@ class KubernetesAssistantConfig(BaseSettings):
     kubeconfig_path: str = Field(default="./config/k3s.yaml", alias="KUBE_CONFIG_PATH")
     discord_token: str = Field(alias="DISCORD_TOKEN")
     config_dir: str = Field(default="./config", alias="CONFIG_DIR")
+    prometheus_url: str | None = Field(default=None, alias="PROMETHEUS_URL")

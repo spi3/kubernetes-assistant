@@ -1,3 +1,5 @@
+import contextlib
+
 from mcp import StdioServerParameters, stdio_client
 from strands import Agent
 from strands.agent import AgentResult
@@ -19,7 +21,7 @@ class KubernetesAssistantAgent:
         )
 
     def run(self, input: str) -> AgentResult:
-        stdio_mcp_client = MCPClient(
+        kubernetes_mcp_client = MCPClient(
             lambda: stdio_client(
                 StdioServerParameters(
                     command="python",
@@ -34,10 +36,32 @@ class KubernetesAssistantAgent:
             )
         )
 
-        with stdio_mcp_client:
-            tools = stdio_mcp_client.list_tools_sync()
+        prometheus_mcp_client = None
 
-            # Create an agent using the Ollama model
+        if self.config.prometheus_url:
+            prometheus_mcp_client = MCPClient(
+                lambda: stdio_client(
+                    StdioServerParameters(
+                        command="docker",
+                        args=[
+                            "run",
+                            "-i",
+                            "--rm",
+                            "-e",
+                            "PROMETHEUS_URL",
+                            "ghcr.io/pab1it0/prometheus-mcp-server",
+                        ],
+                        env={"PROMETHEUS_URL": self.config.prometheus_url},
+                    )
+                )
+            )
+
+        with kubernetes_mcp_client, prometheus_mcp_client or contextlib.nullcontext():
+            tools = kubernetes_mcp_client.list_tools_sync()
+
+            if prometheus_mcp_client is not None:
+                tools += prometheus_mcp_client.list_tools_sync()
+
             agent = Agent(
                 model=self.model,
                 tools=tools,

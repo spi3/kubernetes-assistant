@@ -32,6 +32,7 @@ Configure the assistant using environment variables or a `.env` file:
 | `AGENT_ROLE` | Bot's persona/role description | `intern system administrator` | No |
 | `KUBE_CONFIG_PATH` | Path to kubeconfig file | `./config/k3s.yaml` | No |
 | `CONFIG_DIR` | Configuration directory path | `./config` | No |
+| `PROMETHEUS_URL` | Prometheus server endpoint URL | - | No |
 | `DISCORD_TOKEN` | Discord bot token | - | **Yes** |
 
 ## License
