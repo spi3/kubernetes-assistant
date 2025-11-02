@@ -48,6 +48,7 @@ dependencies = []
 agent = "python -m kubernetes_assistant"
 docker-build = "docker build -t kubernetes-assistant:latest ."
 docker-build-tag = "docker build -t kubernetes-assistant:{args} ."
+cli = "python -m kubernetes_assistant.cli"
 
 [tool.hatch.envs.test]
 extra-dependencies = [
@@ -68,6 +69,10 @@ lint-fix = "ruff check --fix {args:src/kubernetes_assistant tests}"
 format = "ruff format --check {args:src/kubernetes_assistant tests}"
 format-fix = "ruff format {args:src/kubernetes_assistant tests}"
 unit-tests = "pytest tests/ -v"
+fix = [
+  "lint-fix",
+  "format-fix"
+]
 
 all = [
   "types",
