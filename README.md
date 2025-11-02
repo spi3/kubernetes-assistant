@@ -3,7 +3,7 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/kubernetes-assistant.svg)](https://pypi.org/project/kubernetes-assistant)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/kubernetes-assistant.svg)](https://pypi.org/project/kubernetes-assistant)
 
-A Discord bot powered by LLMs that helps manage and monitor Kubernetes clusters. The assistant provides intelligent cluster insights and operational support through natural language interactions.
+An AI powered assistant that helps manage and monitor Kubernetes clusters. The assistant provides intelligent cluster insights and operational support through natural language interactions.
 
 -----
 
