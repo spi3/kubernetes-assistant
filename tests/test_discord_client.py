@@ -41,7 +41,9 @@ class TestDiscordClientInit:
     def test_init_creates_discord_client_with_intents(self, discord_token):
         """Test that __init__ creates a Discord client with correct intents."""
         with patch("kubernetes_assistant.clients.discord.discord.Client") as mock_client_class:
-            with patch("kubernetes_assistant.clients.discord.discord.Intents") as mock_intents_class:
+            with patch(
+                "kubernetes_assistant.clients.discord.discord.Intents"
+            ) as mock_intents_class:
                 mock_intents = Mock()
                 mock_intents_class.default.return_value = mock_intents
 

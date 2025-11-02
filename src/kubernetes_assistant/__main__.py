@@ -14,6 +14,9 @@ async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
     logger = logging.getLogger(__name__)
 
+    if kube_assistant_config.discord_token is None:
+        raise ValueError("Discord token is required.")
+
     model = OllamaModel(
         host=kube_assistant_config.llm_config.model_host,  # Ollama server address
         model_id=kube_assistant_config.llm_config.model_id,  # Specify which model to use
