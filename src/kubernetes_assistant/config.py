@@ -13,5 +13,5 @@ class KubernetesAssistantConfig(BaseSettings):
     agent_name: str = Field(default="KubeBot", alias="AGENT_NAME")
     agent_role: str = Field(default="intern system administrator", alias="AGENT_ROLE")
     kubeconfig_path: str = Field(default="./config/k3s.yaml", alias="KUBE_CONFIG_PATH")
-    discord_token: str = Field(alias="DISCORD_TOKEN")
+    discord_token: str | None = Field(default=None, alias="DISCORD_TOKEN")
     config_dir: str = Field(default="./config", alias="CONFIG_DIR")

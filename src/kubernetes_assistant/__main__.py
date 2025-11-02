@@ -48,7 +48,7 @@ async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
 
 
 def main() -> None:
-    config = KubernetesAssistantConfig()  # type: ignore[call-arg]
+    config = KubernetesAssistantConfig()
     asyncio.run(main_async(config))
 
 
