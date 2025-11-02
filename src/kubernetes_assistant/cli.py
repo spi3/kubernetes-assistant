@@ -15,8 +15,8 @@ def cli() -> None:
     with KubernetesAssistantAgent(kube_assistant_config, model, "cli-session") as agent:
         while True:
             query = input("Enter your Kubernetes query (or 'exit' to quit): ")
-            result = agent.run(query)
-            print(result)
+            agent.run(query)
+            print()
 
 
 if __name__ == "__main__":
