@@ -71,38 +71,78 @@ class TestKubernetesAssistantAgentInit:
             )
             assert agent.model == mock_model
 
-    def test_init_creates_session_manager(self, mock_config, mock_model, session_id):
-        """Test that __init__ creates a FileSessionManager with correct parameters."""
+    @patch("kubernetes_assistant.clients.agent.Agent")
+    @patch("kubernetes_assistant.clients.agent.MCPClient")
+    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
+    def test_init_creates_session_manager(
+        self,
+        mock_conv_manager,
+        mock_mcp_client_class,
+        mock_agent_class,
+        mock_config,
+        mock_model,
+        session_id,
+    ):
+        """Test that __enter__ creates a FileSessionManager with correct parameters."""
+        # Setup mocks
+        mock_mcp_instance = MagicMock()
+        mock_mcp_client_class.return_value = mock_mcp_instance
+        mock_mcp_instance.list_tools_sync.return_value = []
+
         with patch("kubernetes_assistant.clients.agent.FileSessionManager") as mock_session_manager:
             agent = KubernetesAssistantAgent(
                 config=mock_config, model=mock_model, session_id=session_id
             )
 
-            mock_session_manager.assert_called_once_with(
-                session_id=session_id, storage_dir="/test/config/sessions"
-            )
-            assert agent.session_manager == mock_session_manager.return_value
+            # Session manager should not be created yet
+            mock_session_manager.assert_not_called()
 
-    def test_init_with_different_config_dir(self, mock_model, session_id, monkeypatch):
+            # Enter the context manager
+            with agent:
+                # Now session manager should be created
+                mock_session_manager.assert_called_once_with(
+                    session_id=session_id, storage_dir="/test/config/sessions"
+                )
+
+    @patch("kubernetes_assistant.clients.agent.Agent")
+    @patch("kubernetes_assistant.clients.agent.MCPClient")
+    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
+    def test_init_with_different_config_dir(
+        self,
+        mock_conv_manager,
+        mock_mcp_client_class,
+        mock_agent_class,
+        mock_model,
+        session_id,
+        monkeypatch,
+    ):
         """Test session manager path generation with different config directories."""
         monkeypatch.setenv("CONFIG_DIR", "/custom/config/path")
         monkeypatch.setenv("DISCORD_TOKEN", "test-token")
 
         custom_config = KubernetesAssistantConfig()
 
+        # Setup mocks
+        mock_mcp_instance = MagicMock()
+        mock_mcp_client_class.return_value = mock_mcp_instance
+        mock_mcp_instance.list_tools_sync.return_value = []
+
         with patch("kubernetes_assistant.clients.agent.FileSessionManager") as mock_session_manager:
-            _agent = KubernetesAssistantAgent(
+            agent = KubernetesAssistantAgent(
                 config=custom_config, model=mock_model, session_id=session_id
             )
 
-            mock_session_manager.assert_called_once_with(
-                session_id=session_id, storage_dir="/custom/config/path/sessions"
-            )
+            # Enter the context manager to trigger session manager creation
+            with agent:
+                mock_session_manager.assert_called_once_with(
+                    session_id=session_id, storage_dir="/custom/config/path/sessions"
+                )
 
 
 class TestKubernetesAssistantAgentRun:
     """Test cases for KubernetesAssistantAgent run method."""
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -115,9 +155,12 @@ class TestKubernetesAssistantAgentRun:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
-        """Test that run creates MCPClient with correct StdioServerParameters."""
+        """Test that MCPClient is created with correct StdioServerParameters."""
         # Setup mocks
         mock_mcp_instance = MagicMock()
         mock_mcp_client_class.return_value = mock_mcp_instance
@@ -129,11 +172,17 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_instance.return_value = mock_agent_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run the method
-        _result = agent_instance.run("test input")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run
+        with agent:
+            _result = agent.run("test input")
 
         # Verify MCPClient was created
-        mock_mcp_client_class.assert_called_once()
+        mock_mcp_client_class.assert_called()
 
         # Verify the lambda passed to MCPClient calls stdio_client correctly
         client_factory = mock_mcp_client_class.call_args[0][0]
@@ -142,6 +191,7 @@ class TestKubernetesAssistantAgentRun:
         # Check that stdio_client was called
         assert mock_stdio_client.called
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -154,9 +204,12 @@ class TestKubernetesAssistantAgentRun:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
-        """Test that run calls list_tools_sync on the MCP client."""
+        """Test that entering context calls list_tools_sync on the MCP client."""
         # Setup mocks
         mock_mcp_instance = MagicMock()
         mock_mcp_client_class.return_value = mock_mcp_instance
@@ -169,12 +222,19 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_instance.return_value = mock_agent_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run the method
-        agent_instance.run("test input")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run
+        with agent:
+            agent.run("test input")
 
         # Verify list_tools_sync was called
         mock_mcp_instance.list_tools_sync.assert_called_once()
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -187,9 +247,12 @@ class TestKubernetesAssistantAgentRun:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
-        """Test that run creates an Agent with correct parameters."""
+        """Test that context manager creates an Agent with correct parameters."""
         # Setup mocks
         mock_mcp_instance = MagicMock()
         mock_mcp_client_class.return_value = mock_mcp_instance
@@ -202,20 +265,29 @@ class TestKubernetesAssistantAgentRun:
         mock_conv_manager_instance = MagicMock()
         mock_conv_manager.return_value = mock_conv_manager_instance
 
+        mock_session_manager_instance = MagicMock()
+        mock_session_manager.return_value = mock_session_manager_instance
+
         mock_agent_instance = MagicMock()
         mock_agent_result = Mock()
         mock_agent_result.output = "test output"
         mock_agent_instance.return_value = mock_agent_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run the method
-        agent_instance.run("test input")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run
+        with agent:
+            agent.run("test input")
 
         # Verify agent_prompt was called with correct parameters
         mock_agent_prompt.assert_called_once_with(
-            agent_instance.config.agent_name,
-            agent_instance.config.cluster_name,
-            agent_instance.config.agent_role,
+            agent.config.agent_name,
+            agent.config.cluster_name,
+            agent.config.agent_role,
         )
 
         # Verify SummarizingConversationManager was created without parameters
@@ -223,13 +295,14 @@ class TestKubernetesAssistantAgentRun:
 
         # Verify Agent was created with correct parameters
         mock_agent_class.assert_called_once_with(
-            model=agent_instance.model,
+            model=agent.model,
             tools=mock_tools,
             system_prompt=mock_prompt,
             conversation_manager=mock_conv_manager_instance,
-            session_manager=agent_instance.session_manager,
+            session_manager=mock_session_manager_instance,
         )
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -242,7 +315,10 @@ class TestKubernetesAssistantAgentRun:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
         """Test that run calls the agent with the provided input."""
         # Setup mocks
@@ -258,12 +334,19 @@ class TestKubernetesAssistantAgentRun:
 
         test_input = "What is the status of my pods?"
 
-        # Run the method
-        _result = agent_instance.run(test_input)
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run
+        with agent:
+            _result = agent.run(test_input)
 
         # Verify the agent was called with the input
         mock_agent_instance.assert_called_once_with(test_input)
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -276,7 +359,10 @@ class TestKubernetesAssistantAgentRun:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
         """Test that run returns the AgentResult from the agent call."""
         # Setup mocks
@@ -290,13 +376,20 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_instance.return_value = expected_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run the method
-        result = agent_instance.run("test input")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run
+        with agent:
+            result = agent.run("test input")
 
         # Verify the result
         assert result == expected_result
         assert result.output == "expected output"
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -309,9 +402,12 @@ class TestKubernetesAssistantAgentRun:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
-        """Test that run uses MCPClient as a context manager."""
+        """Test that agent uses MCPClient as a context manager."""
         # Setup mocks
         mock_mcp_instance = MagicMock()
         mock_mcp_client_class.return_value = mock_mcp_instance
@@ -323,13 +419,20 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_instance.return_value = mock_agent_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run the method
-        agent_instance.run("test input")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Use the agent with context manager
+        with agent:
+            agent.run("test input")
 
         # Verify context manager methods were called
         mock_mcp_instance.__enter__.assert_called_once()
         mock_mcp_instance.__exit__.assert_called_once()
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -342,9 +445,12 @@ class TestKubernetesAssistantAgentRun:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
-        """Test that run passes the correct kubeconfig path to the MCP server."""
+        """Test that agent passes the correct kubeconfig path to the MCP server."""
         # Setup mocks
         mock_mcp_instance = MagicMock()
         mock_mcp_client_class.return_value = mock_mcp_instance
@@ -356,8 +462,14 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_instance.return_value = mock_agent_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run the method
-        agent_instance.run("test input")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Use the agent with context manager
+        with agent:
+            agent.run("test input")
 
         # Verify the lambda passed to MCPClient
         client_factory = mock_mcp_client_class.call_args[0][0]
@@ -380,6 +492,7 @@ class TestKubernetesAssistantAgentRun:
 class TestKubernetesAssistantAgentEdgeCases:
     """Test edge cases and error scenarios."""
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -392,7 +505,10 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
         """Test that run handles empty input string."""
         # Setup mocks
@@ -406,12 +522,19 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_agent_instance.return_value = mock_agent_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run with empty input
-        _result = agent_instance.run("")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run with empty input
+        with agent:
+            _result = agent.run("")
 
         # Verify it still calls the agent
         mock_agent_instance.assert_called_once_with("")
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -424,9 +547,12 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
-        """Test that run handles the case when no tools are available."""
+        """Test that agent handles the case when no tools are available."""
         # Setup mocks
         mock_mcp_instance = MagicMock()
         mock_mcp_client_class.return_value = mock_mcp_instance
@@ -438,13 +564,20 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_agent_instance.return_value = mock_agent_result
         mock_agent_class.return_value = mock_agent_instance
 
-        # Run the method
-        result = agent_instance.run("test input")
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run
+        with agent:
+            result = agent.run("test input")
 
         # Verify Agent was created with empty tools list
         assert mock_agent_class.call_args[1]["tools"] == []
         assert result == mock_agent_result
 
+    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
     @patch("kubernetes_assistant.clients.agent.Agent")
     @patch("kubernetes_assistant.clients.agent.MCPClient")
     @patch("kubernetes_assistant.clients.agent.stdio_client")
@@ -457,7 +590,10 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_stdio_client,
         mock_mcp_client_class,
         mock_agent_class,
-        agent_instance,
+        mock_session_manager,
+        mock_config,
+        mock_model,
+        session_id,
     ):
         """Test that run handles long input strings."""
         # Setup mocks
@@ -474,8 +610,14 @@ class TestKubernetesAssistantAgentEdgeCases:
         # Create a long input string
         long_input = "What is the status? " * 500
 
-        # Run with long input
-        _result = agent_instance.run(long_input)
+        # Create agent with mocked dependencies
+        agent = KubernetesAssistantAgent(
+            config=mock_config, model=mock_model, session_id=session_id
+        )
+
+        # Enter context manager and run with long input
+        with agent:
+            _result = agent.run(long_input)
 
         # Verify the agent was called with the full input
         mock_agent_instance.assert_called_once_with(long_input)

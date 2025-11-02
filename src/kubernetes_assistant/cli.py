@@ -12,12 +12,11 @@ def cli() -> None:
         model_id=kube_assistant_config.llm_config.model_id,  # Specify which model to use
     )
 
-    agent = KubernetesAssistantAgent(kube_assistant_config, model, "cli-session")
-
-    while True:
-        query = input("Enter your Kubernetes query (or 'exit' to quit): ")
-        result = agent.run(query)
-        print(result)
+    with KubernetesAssistantAgent(kube_assistant_config, model, "cli-session") as agent:
+        while True:
+            query = input("Enter your Kubernetes query (or 'exit' to quit): ")
+            result = agent.run(query)
+            print(result)
 
 
 if __name__ == "__main__":

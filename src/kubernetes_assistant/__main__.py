@@ -30,21 +30,21 @@ async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
             logger.info(f"Received discord message: {formatted_message}")
 
             guild_id = message.guild.id if message.guild else "dm"
-            agent = KubernetesAssistantAgent(
+            with KubernetesAssistantAgent(
                 kube_assistant_config, model, f"{guild_id}-{message.channel.id}"
-            )
-            result = agent.run(formatted_message)
-            # Handle ContentBlock properly - it might be a TextBlock or other type
-            content_block = result.message["content"][0]
-            result_content = content_block.get("text", str(content_block))
-            logger.info(f"Agent Response to discord message: {result_content}")
+            ) as agent:
+                result = agent.run(formatted_message)
+                # Handle ContentBlock properly - it might be a TextBlock or other type
+                content_block = result.message["content"][0]
+                result_content = content_block.get("text", str(content_block))
+                logger.info(f"Agent Response to discord message: {result_content}")
 
-            await client.send_message(
-                channel_id=message.channel.id,
-                content=result_content,
-            )
+                await client.send_message(
+                    channel_id=message.channel.id,
+                    content=result_content,
+                )
 
-            logger.info("Sent response back to discord.")
+                logger.info("Sent response back to discord.")
 
 
 def main() -> None:
