@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from strands.models.model import Model
 
-from kubernetes_assistant.clients.agent import KubernetesAssistantAgent
 from kubernetes_assistant.config import KubernetesAssistantConfig
+from kubernetes_assistant.kubernetes_assistant_agent import KubernetesAssistantAgent
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def session_id():
 @pytest.fixture
 def agent_instance(mock_config, mock_model, session_id):
     """Create a KubernetesAssistantAgent instance with mocked dependencies."""
-    with patch("kubernetes_assistant.clients.agent.FileSessionManager"):
+    with patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"):
         agent = KubernetesAssistantAgent(
             config=mock_config, model=mock_model, session_id=session_id
         )
@@ -57,7 +57,7 @@ class TestKubernetesAssistantAgentInit:
 
     def test_init_stores_config(self, mock_config, mock_model, session_id):
         """Test that __init__ correctly stores the config."""
-        with patch("kubernetes_assistant.clients.agent.FileSessionManager"):
+        with patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"):
             agent = KubernetesAssistantAgent(
                 config=mock_config, model=mock_model, session_id=session_id
             )
@@ -65,15 +65,15 @@ class TestKubernetesAssistantAgentInit:
 
     def test_init_stores_model(self, mock_config, mock_model, session_id):
         """Test that __init__ correctly stores the model."""
-        with patch("kubernetes_assistant.clients.agent.FileSessionManager"):
+        with patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"):
             agent = KubernetesAssistantAgent(
                 config=mock_config, model=mock_model, session_id=session_id
             )
             assert agent.model == mock_model
 
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
     def test_init_creates_session_manager(
         self,
         mock_conv_manager,
@@ -89,7 +89,9 @@ class TestKubernetesAssistantAgentInit:
         mock_mcp_client_class.return_value = mock_mcp_instance
         mock_mcp_instance.list_tools_sync.return_value = []
 
-        with patch("kubernetes_assistant.clients.agent.FileSessionManager") as mock_session_manager:
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"
+        ) as mock_session_manager:
             agent = KubernetesAssistantAgent(
                 config=mock_config, model=mock_model, session_id=session_id
             )
@@ -104,9 +106,9 @@ class TestKubernetesAssistantAgentInit:
                     session_id=session_id, storage_dir="/test/config/sessions"
                 )
 
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
     def test_init_with_different_config_dir(
         self,
         mock_conv_manager,
@@ -127,7 +129,9 @@ class TestKubernetesAssistantAgentInit:
         mock_mcp_client_class.return_value = mock_mcp_instance
         mock_mcp_instance.list_tools_sync.return_value = []
 
-        with patch("kubernetes_assistant.clients.agent.FileSessionManager") as mock_session_manager:
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"
+        ) as mock_session_manager:
             agent = KubernetesAssistantAgent(
                 config=custom_config, model=mock_model, session_id=session_id
             )
@@ -142,12 +146,12 @@ class TestKubernetesAssistantAgentInit:
 class TestKubernetesAssistantAgentRun:
     """Test cases for KubernetesAssistantAgent run method."""
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_creates_mcp_client_with_correct_params(
         self,
         mock_agent_prompt,
@@ -191,12 +195,12 @@ class TestKubernetesAssistantAgentRun:
         # Check that stdio_client was called
         assert mock_stdio_client.called
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_lists_tools_from_mcp_client(
         self,
         mock_agent_prompt,
@@ -234,12 +238,12 @@ class TestKubernetesAssistantAgentRun:
         # Verify list_tools_sync was called
         mock_mcp_instance.list_tools_sync.assert_called_once()
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_creates_agent_with_correct_parameters(
         self,
         mock_agent_prompt,
@@ -302,12 +306,12 @@ class TestKubernetesAssistantAgentRun:
             session_manager=mock_session_manager_instance,
         )
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_calls_agent_with_input(
         self,
         mock_agent_prompt,
@@ -346,12 +350,12 @@ class TestKubernetesAssistantAgentRun:
         # Verify the agent was called with the input
         mock_agent_instance.assert_called_once_with(test_input)
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_returns_agent_result(
         self,
         mock_agent_prompt,
@@ -389,12 +393,12 @@ class TestKubernetesAssistantAgentRun:
         assert result == expected_result
         assert result.output == "expected output"
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_uses_context_manager_for_mcp_client(
         self,
         mock_agent_prompt,
@@ -432,12 +436,12 @@ class TestKubernetesAssistantAgentRun:
         mock_mcp_instance.__enter__.assert_called_once()
         mock_mcp_instance.__exit__.assert_called_once()
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_passes_kubeconfig_path_to_mcp(
         self,
         mock_agent_prompt,
@@ -492,12 +496,12 @@ class TestKubernetesAssistantAgentRun:
 class TestKubernetesAssistantAgentEdgeCases:
     """Test edge cases and error scenarios."""
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_with_empty_input(
         self,
         mock_agent_prompt,
@@ -534,12 +538,12 @@ class TestKubernetesAssistantAgentEdgeCases:
         # Verify it still calls the agent
         mock_agent_instance.assert_called_once_with("")
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_with_no_tools_available(
         self,
         mock_agent_prompt,
@@ -577,12 +581,12 @@ class TestKubernetesAssistantAgentEdgeCases:
         assert mock_agent_class.call_args[1]["tools"] == []
         assert result == mock_agent_result
 
-    @patch("kubernetes_assistant.clients.agent.FileSessionManager")
-    @patch("kubernetes_assistant.clients.agent.Agent")
-    @patch("kubernetes_assistant.clients.agent.MCPClient")
-    @patch("kubernetes_assistant.clients.agent.stdio_client")
-    @patch("kubernetes_assistant.clients.agent.SummarizingConversationManager")
-    @patch("kubernetes_assistant.clients.agent.agent_prompt")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.Agent")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.MCPClient")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.stdio_client")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.SummarizingConversationManager")
+    @patch("kubernetes_assistant.kubernetes_assistant_agent.agent_prompt")
     def test_run_with_long_input(
         self,
         mock_agent_prompt,

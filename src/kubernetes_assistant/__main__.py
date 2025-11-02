@@ -4,9 +4,9 @@ import os
 
 from strands.models.ollama import OllamaModel
 
-from kubernetes_assistant.clients.agent import KubernetesAssistantAgent
 from kubernetes_assistant.clients.discord import DiscordClient
 from kubernetes_assistant.config import KubernetesAssistantConfig
+from kubernetes_assistant.kubernetes_assistant_agent import KubernetesAssistantAgent
 from kubernetes_assistant.utils.discord_message_formatter import discord_message_formatter
 
 

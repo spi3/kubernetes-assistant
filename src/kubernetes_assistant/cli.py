@@ -1,7 +1,7 @@
 from strands.models.ollama import OllamaModel
 
-from kubernetes_assistant.clients.agent import KubernetesAssistantAgent
 from kubernetes_assistant.config import KubernetesAssistantConfig
+from kubernetes_assistant.kubernetes_assistant_agent import KubernetesAssistantAgent
 
 
 def cli() -> None:
