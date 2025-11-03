@@ -7,7 +7,7 @@ from strands.models.anthropic import AnthropicModel
 from strands.models.gemini import GeminiModel
 from strands.models.ollama import OllamaModel
 
-from kubernetes_assistant.config import KubernetesAssistantConfig, ModelConfig
+from kubernetes_assistant.kubernetes_assistant_config import KubernetesAssistantConfig, ModelConfig
 
 
 class TestModelConfigDefaults:
@@ -161,7 +161,7 @@ class TestModelConfigEnvironmentVariables:
 class TestModelConfigCreateModelOllama:
     """Test create_model method for Ollama provider."""
 
-    @patch("kubernetes_assistant.config.OllamaModel")
+    @patch("kubernetes_assistant.kubernetes_assistant_config.OllamaModel")
     def test_create_ollama_model_with_defaults(self, mock_ollama_class, monkeypatch):
         """Test creating Ollama model with default configuration."""
         # Clear environment variables
@@ -180,7 +180,7 @@ class TestModelConfigCreateModelOllama:
         )
         assert result == mock_model
 
-    @patch("kubernetes_assistant.config.OllamaModel")
+    @patch("kubernetes_assistant.kubernetes_assistant_config.OllamaModel")
     def test_create_ollama_model_with_custom_config(self, mock_ollama_class, monkeypatch):
         """Test creating Ollama model with custom configuration."""
         monkeypatch.setenv("OLLAMA_HOST", "http://custom:9999")
@@ -213,9 +213,13 @@ class TestModelConfigCreateModelOllama:
 class TestModelConfigCreateModelAnthropic:
     """Test create_model method for Anthropic provider."""
 
-    @patch("kubernetes_assistant.config.AnthropicModel")
+    @patch("kubernetes_assistant.kubernetes_assistant_config.AnthropicModel")
     def test_create_anthropic_model_with_api_key(self, mock_anthropic_class, monkeypatch):
         """Test creating Anthropic model with API key."""
+        # Clear environment variables to ensure defaults are used
+        for key in ["ANTHROPIC_MODEL_ID", "ANTHROPIC_MAX_TOKENS", "ANTHROPIC_TEMPERATURE"]:
+            monkeypatch.delenv(key, raising=False)
+
         monkeypatch.setenv("LLM_PROVIDER", "anthropic")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test123")
 
@@ -233,7 +237,7 @@ class TestModelConfigCreateModelAnthropic:
         )
         assert result == mock_model
 
-    @patch("kubernetes_assistant.config.AnthropicModel")
+    @patch("kubernetes_assistant.kubernetes_assistant_config.AnthropicModel")
     def test_create_anthropic_model_with_custom_config(self, mock_anthropic_class, monkeypatch):
         """Test creating Anthropic model with custom configuration."""
         monkeypatch.setenv("LLM_PROVIDER", "anthropic")
@@ -292,7 +296,7 @@ class TestModelConfigCreateModelAnthropic:
 class TestModelConfigCreateModelGemini:
     """Test create_model method for Gemini provider."""
 
-    @patch("kubernetes_assistant.config.GeminiModel")
+    @patch("kubernetes_assistant.kubernetes_assistant_config.GeminiModel")
     def test_create_gemini_model_with_api_key(self, mock_gemini_class, monkeypatch):
         """Test creating Gemini model with API key."""
         monkeypatch.setenv("LLM_PROVIDER", "gemini")
@@ -316,7 +320,7 @@ class TestModelConfigCreateModelGemini:
         )
         assert result == mock_model
 
-    @patch("kubernetes_assistant.config.GeminiModel")
+    @patch("kubernetes_assistant.kubernetes_assistant_config.GeminiModel")
     def test_create_gemini_model_with_custom_config(self, mock_gemini_class, monkeypatch):
         """Test creating Gemini model with custom configuration."""
         monkeypatch.setenv("LLM_PROVIDER", "gemini")
@@ -508,7 +512,7 @@ class TestKubernetesAssistantConfigNestedLLMConfig:
         assert config.llm_config.anthropic_api_key == "test-key"
         assert config.llm_config.anthropic_model_id == "claude-opus-4-20250514"
 
-    @patch("kubernetes_assistant.config.AnthropicModel")
+    @patch("kubernetes_assistant.kubernetes_assistant_config.AnthropicModel")
     def test_llm_config_create_model_works(self, mock_anthropic_class, monkeypatch):
         """Test that create_model can be called on nested llm_config."""
         monkeypatch.setenv("LLM_PROVIDER", "anthropic")

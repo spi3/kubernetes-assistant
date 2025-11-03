@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from strands.models.model import Model
 
-from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.kubernetes_assistant_agent import KubernetesAssistantAgent
+from kubernetes_assistant.kubernetes_assistant_config import KubernetesAssistantConfig
 
 
 @pytest.fixture
@@ -46,7 +46,10 @@ def session_id():
 def agent_instance(mock_config, mock_model, session_id):
     """Create a KubernetesAssistantAgent instance with mocked dependencies."""
     with patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"):
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
             return agent
 
@@ -58,7 +61,8 @@ class TestKubernetesAssistantAgentInit:
         """Test that __init__ correctly stores the config."""
         with patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"):
             with patch(
-                "kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model
+                "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+                return_value=mock_model,
             ):
                 agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
                 assert agent.config == mock_config
@@ -67,7 +71,8 @@ class TestKubernetesAssistantAgentInit:
         """Test that __init__ correctly stores the model."""
         with patch("kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"):
             with patch(
-                "kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model
+                "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+                return_value=mock_model,
             ):
                 agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
                 assert agent.model == mock_model
@@ -94,7 +99,8 @@ class TestKubernetesAssistantAgentInit:
             "kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"
         ) as mock_session_manager:
             with patch(
-                "kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model
+                "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+                return_value=mock_model,
             ):
                 agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
@@ -135,7 +141,8 @@ class TestKubernetesAssistantAgentInit:
             "kubernetes_assistant.kubernetes_assistant_agent.FileSessionManager"
         ) as mock_session_manager:
             with patch(
-                "kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model
+                "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+                return_value=mock_model,
             ):
                 agent = KubernetesAssistantAgent(config=custom_config, session_id=session_id)
 
@@ -180,7 +187,10 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run
@@ -229,7 +239,10 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run
@@ -280,7 +293,10 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run
@@ -339,7 +355,10 @@ class TestKubernetesAssistantAgentRun:
         test_input = "What is the status of my pods?"
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run
@@ -380,7 +399,10 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run
@@ -422,7 +444,10 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Use the agent with context manager
@@ -464,7 +489,10 @@ class TestKubernetesAssistantAgentRun:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Use the agent with context manager
@@ -523,7 +551,10 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run with empty input
@@ -564,7 +595,10 @@ class TestKubernetesAssistantAgentEdgeCases:
         mock_agent_class.return_value = mock_agent_instance
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run
@@ -609,7 +643,10 @@ class TestKubernetesAssistantAgentEdgeCases:
         long_input = "What is the status? " * 500
 
         # Create agent with mocked dependencies
-        with patch("kubernetes_assistant.config.ModelConfig.create_model", return_value=mock_model):
+        with patch(
+            "kubernetes_assistant.kubernetes_assistant_config.ModelConfig.create_model",
+            return_value=mock_model,
+        ):
             agent = KubernetesAssistantAgent(config=mock_config, session_id=session_id)
 
         # Enter context manager and run with long input

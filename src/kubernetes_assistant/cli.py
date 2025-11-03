@@ -1,8 +1,8 @@
 import logging
 import sys
 
-from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.kubernetes_assistant_agent import KubernetesAssistantAgent
+from kubernetes_assistant.kubernetes_assistant_config import KubernetesAssistantConfig
 
 logger = logging.getLogger(__name__)
 

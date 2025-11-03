@@ -8,7 +8,7 @@ from strands.agent.conversation_manager import SummarizingConversationManager
 from strands.session.file_session_manager import FileSessionManager
 from strands.tools.mcp import MCPClient
 
-from kubernetes_assistant.config import KubernetesAssistantConfig
+from kubernetes_assistant.kubernetes_assistant_config import KubernetesAssistantConfig
 from kubernetes_assistant.prompts.agent_prompt import agent_prompt
 
 logger = logging.getLogger(__name__)
