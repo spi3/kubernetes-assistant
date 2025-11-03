@@ -63,6 +63,7 @@ Configure the assistant using environment variables or a `.env` file:
 | `CLUSTER_NAME` | Display name for your cluster | `The Cluster` | No |
 | `AGENT_NAME` | Bot's display name | `KubeBot` | No |
 | `AGENT_ROLE` | Bot's persona/role description | `intern system administrator` | No |
+| `CUSTOM_AGENT_PROMPT` | Override the default agent prompt entirely. When set, this replaces the generated prompt. | - | No |
 | `KUBE_CONFIG_PATH` | Path to kubeconfig file | `./config/k3s.yaml` | No |
 | `CONFIG_DIR` | Configuration directory path | `./config` | No |
 | `PROMETHEUS_URL` | Prometheus server endpoint URL | - | No |

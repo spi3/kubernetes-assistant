@@ -70,6 +70,11 @@ class KubernetesAssistantConfig(BaseSettings):
     cluster_name: str = Field(default="The Cluster", alias="CLUSTER_NAME")
     agent_name: str = Field(default="KubeBot", alias="AGENT_NAME")
     agent_role: str = Field(default="intern system administrator", alias="AGENT_ROLE")
+    custom_agent_prompt: str | None = Field(
+        default=None,
+        alias="CUSTOM_AGENT_PROMPT",
+        description="Override the default agent prompt entirely. If set, this will be used instead of the generated prompt."
+    )
     kubeconfig_path: str = Field(default="./config/k3s.yaml", alias="KUBE_CONFIG_PATH")
     discord_token: str | None = Field(default=None, alias="DISCORD_TOKEN")
     config_dir: str = Field(default="./config", alias="CONFIG_DIR")

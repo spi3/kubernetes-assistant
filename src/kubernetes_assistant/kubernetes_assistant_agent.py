@@ -113,14 +113,21 @@ class KubernetesAssistantAgent:
 
             # Initialize the agent with tools
             try:
-                self.agent = Agent(
-                    model=self.model,
-                    tools=tools,
-                    system_prompt=agent_prompt(
+                # Use custom prompt if provided, otherwise generate the default prompt
+                system_prompt = (
+                    self.config.custom_agent_prompt
+                    if self.config.custom_agent_prompt is not None
+                    else agent_prompt(
                         self.config.agent_name,
                         self.config.cluster_name,
                         self.config.agent_role,
-                    ),
+                    )
+                )
+
+                self.agent = Agent(
+                    model=self.model,
+                    tools=tools,
+                    system_prompt=system_prompt,
                     conversation_manager=SummarizingConversationManager(),
                     session_manager=FileSessionManager(
                         session_id=self.session_id,
