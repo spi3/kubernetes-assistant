@@ -29,6 +29,8 @@ dependencies = [
   "strands-agents",
   "strands-agents-tools",
   "strands-agents[ollama]",
+  "strands-agents[anthropic]",
+  "strands-agents[gemini]",
   "discord.py",
   "pydantic-settings"
 ]

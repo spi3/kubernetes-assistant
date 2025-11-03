@@ -2,8 +2,6 @@ import asyncio
 import logging
 import os
 
-from strands.models.ollama import OllamaModel
-
 from kubernetes_assistant.clients.discord import DiscordClient
 from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.kubernetes_assistant_agent import KubernetesAssistantAgent
@@ -17,39 +15,83 @@ async def main_async(kube_assistant_config: KubernetesAssistantConfig) -> None:
     if kube_assistant_config.discord_token is None:
         raise ValueError("Discord token is required.")
 
-    model = OllamaModel(
-        host=kube_assistant_config.llm_config.model_host,  # Ollama server address
-        model_id=kube_assistant_config.llm_config.model_id,  # Specify which model to use
-    )
-
     async with DiscordClient(kube_assistant_config.discord_token) as client:
         while True:
-            # Block until message received in specific channels
-            message = await client.wait_for_message()
-            formatted_message = discord_message_formatter(message)
-            logger.info(f"Received discord message: {formatted_message}")
+            try:
+                # Block until message received in specific channels
+                message = await client.wait_for_message()
+                formatted_message = discord_message_formatter(message)
+                logger.info(f"Received discord message: {formatted_message}")
 
-            guild_id = message.guild.id if message.guild else "dm"
-            with KubernetesAssistantAgent(
-                kube_assistant_config, model, f"{guild_id}-{message.channel.id}"
-            ) as agent:
-                result = agent.run(formatted_message)
-                # Handle ContentBlock properly - it might be a TextBlock or other type
-                content_block = result.message["content"][0]
-                result_content = content_block.get("text", str(content_block))
-                logger.info(f"Agent Response to discord message: {result_content}")
+                # Safely extract guild and channel IDs
+                try:
+                    guild_id = message.guild.id if message.guild else "dm"
+                    channel_id = message.channel.id
+                except AttributeError as e:
+                    logger.error(f"Failed to extract message attributes: {e}")
+                    continue
 
-                await client.send_message(
-                    channel_id=message.channel.id,
-                    content=result_content,
-                )
+                try:
+                    with KubernetesAssistantAgent(
+                        kube_assistant_config, f"{guild_id}-{channel_id}"
+                    ) as agent:
+                        result = agent.run(formatted_message)
 
-                logger.info("Sent response back to discord.")
+                        # Handle ContentBlock properly - it might be a TextBlock or other type
+                        try:
+                            content_block = result.message["content"][0]
+                            result_content = content_block.get("text", str(content_block))
+                        except (KeyError, IndexError, AttributeError) as e:
+                            logger.error(f"Failed to extract agent result content: {e}")
+                            result_content = (
+                                "Sorry, I encountered an error processing the response."
+                            )
+
+                        logger.info(f"Agent Response to discord message: {result_content}")
+
+                        try:
+                            await client.send_message(
+                                channel_id=channel_id,
+                                content=result_content,
+                            )
+                            logger.info("Sent response back to discord.")
+                        except Exception as e:
+                            logger.error(f"Failed to send message to Discord: {e}")
+
+                except Exception as e:
+                    logger.error(f"Agent execution failed: {e}", exc_info=True)
+                    try:
+                        await client.send_message(
+                            channel_id=channel_id,
+                            content="Sorry, I encountered an error processing your request. "
+                            "Please try again later.",
+                        )
+                    except Exception as send_error:
+                        logger.error(f"Failed to send error message to Discord: {send_error}")
+
+            except asyncio.CancelledError:
+                logger.info("Bot shutting down...")
+                raise
+            except Exception as e:
+                logger.error(f"Unexpected error in message loop: {e}", exc_info=True)
+                # Continue processing next message
+                continue
 
 
 def main() -> None:
-    config = KubernetesAssistantConfig()  # type: ignore[call-arg]
-    asyncio.run(main_async(config))
+    try:
+        config = KubernetesAssistantConfig()  # type: ignore[call-arg]
+    except Exception as e:
+        logging.error(f"Failed to load configuration: {e}", exc_info=True)
+        raise SystemExit(1) from e
+
+    try:
+        asyncio.run(main_async(config))
+    except KeyboardInterrupt:
+        logging.info("Bot stopped by user")
+    except Exception as e:
+        logging.error(f"Fatal error: {e}", exc_info=True)
+        raise SystemExit(1) from e
 
 
 if __name__ == "__main__":

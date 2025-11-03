@@ -1,22 +1,29 @@
 import contextlib
+import logging
 
 from mcp import StdioServerParameters, stdio_client
 from strands import Agent
 from strands.agent import AgentResult
 from strands.agent.conversation_manager import SummarizingConversationManager
-from strands.models.model import Model
 from strands.session.file_session_manager import FileSessionManager
 from strands.tools.mcp import MCPClient
 
 from kubernetes_assistant.config import KubernetesAssistantConfig
 from kubernetes_assistant.prompts.agent_prompt import agent_prompt
 
+logger = logging.getLogger(__name__)
+
 
 class KubernetesAssistantAgent:
-    def __init__(self, config: KubernetesAssistantConfig, model: Model, session_id: str):
+    def __init__(self, config: KubernetesAssistantConfig, session_id: str):
         self.config = config
-        self.model = model
         self.session_id = session_id
+
+        try:
+            self.model = config.llm_config.create_model()
+        except Exception as e:
+            logger.error(f"Failed to create LLM model: {e}")
+            raise RuntimeError(f"Failed to initialize LLM model: {e}") from e
 
         # MCP Clients
         self.kubernetes_mcp_client = MCPClient(
@@ -62,30 +69,74 @@ class KubernetesAssistantAgent:
         self._context_stack = contextlib.ExitStack()
         self._context_stack.__enter__()
 
-        # Enter the kubernetes client context
-        self._context_stack.enter_context(self.kubernetes_mcp_client)
+        try:
+            # Enter the kubernetes client context
+            try:
+                self._context_stack.enter_context(self.kubernetes_mcp_client)
+                logger.info("Kubernetes MCP client connected successfully")
+            except Exception as e:
+                logger.error(f"Failed to connect to Kubernetes MCP client: {e}")
+                raise RuntimeError(f"Failed to connect to Kubernetes MCP server: {e}") from e
 
-        # Enter the prometheus client context if it exists
-        if self.prometheus_mcp_client is not None:
-            self._context_stack.enter_context(self.prometheus_mcp_client)
+            # Enter the prometheus client context if it exists
+            if self.prometheus_mcp_client is not None:
+                try:
+                    self._context_stack.enter_context(self.prometheus_mcp_client)
+                    logger.info("Prometheus MCP client connected successfully")
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to connect to Prometheus MCP client: {e}. "
+                        "Continuing without Prometheus support."
+                    )
+                    self.prometheus_mcp_client = None
 
-        # Now that contexts are entered, we can list tools
-        tools = self.kubernetes_mcp_client.list_tools_sync()
-        if self.prometheus_mcp_client is not None:
-            tools += self.prometheus_mcp_client.list_tools_sync()
+            # Now that contexts are entered, we can list tools
+            try:
+                tools = self.kubernetes_mcp_client.list_tools_sync()
+                logger.info(f"Loaded {len(tools)} tools from Kubernetes MCP server")
+            except Exception as e:
+                logger.error(f"Failed to list tools from Kubernetes MCP client: {e}")
+                raise RuntimeError(
+                    f"Failed to retrieve tools from Kubernetes MCP server: {e}"
+                ) from e
 
-        # Initialize the agent with tools
-        self.agent = Agent(
-            model=self.model,
-            tools=tools,
-            system_prompt=agent_prompt(
-                self.config.agent_name, self.config.cluster_name, self.config.agent_role
-            ),
-            conversation_manager=SummarizingConversationManager(),
-            session_manager=FileSessionManager(
-                session_id=self.session_id, storage_dir=self.config.config_dir + "/sessions"
-            ),
-        )
+            if self.prometheus_mcp_client is not None:
+                try:
+                    prometheus_tools = self.prometheus_mcp_client.list_tools_sync()
+                    tools += prometheus_tools
+                    logger.info(f"Loaded {len(prometheus_tools)} tools from Prometheus MCP server")
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to list tools from Prometheus MCP client: {e}. "
+                        "Continuing without Prometheus tools."
+                    )
+
+            # Initialize the agent with tools
+            try:
+                self.agent = Agent(
+                    model=self.model,
+                    tools=tools,
+                    system_prompt=agent_prompt(
+                        self.config.agent_name,
+                        self.config.cluster_name,
+                        self.config.agent_role,
+                    ),
+                    conversation_manager=SummarizingConversationManager(),
+                    session_manager=FileSessionManager(
+                        session_id=self.session_id,
+                        storage_dir=self.config.config_dir + "/sessions",
+                    ),
+                )
+                logger.info("Agent initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize agent: {e}")
+                raise RuntimeError(f"Failed to initialize agent: {e}") from e
+
+        except Exception:
+            # Clean up on error
+            if self._context_stack is not None:
+                self._context_stack.__exit__(None, None, None)
+            raise
 
         return self
 
@@ -101,5 +152,9 @@ class KubernetesAssistantAgent:
                 "Agent has not been initialized. Use the context manager to initialize."
             )
 
-        agent_result = self.agent(input)  # Prints model output to stdout by default
-        return agent_result
+        try:
+            agent_result = self.agent(input)  # Prints model output to stdout by default
+            return agent_result
+        except Exception as e:
+            logger.error(f"Agent execution failed for input: {input[:100]}... Error: {e}")
+            raise RuntimeError(f"Agent execution failed: {e}") from e
