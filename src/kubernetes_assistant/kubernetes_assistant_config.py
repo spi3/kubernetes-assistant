@@ -73,7 +73,7 @@ class KubernetesAssistantConfig(BaseSettings):
     custom_agent_prompt: str | None = Field(
         default=None,
         alias="CUSTOM_AGENT_PROMPT",
-        description="Override the default agent prompt entirely. If set, this will be used instead of the generated prompt."
+        description="Override the default agent prompt entirely. If set, this will be used instead of the generated prompt.",
     )
     kubeconfig_path: str = Field(default="./config/k3s.yaml", alias="KUBE_CONFIG_PATH")
     discord_token: str | None = Field(default=None, alias="DISCORD_TOKEN")
