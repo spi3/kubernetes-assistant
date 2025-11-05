@@ -122,6 +122,9 @@ class TestDiscordClientSetupHandlers:
         discord_client_instance.client.user = Mock()
         discord_client_instance.client.user.id = 456
 
+        # Ensure the bot is mentioned in the message
+        mock_message.mentions = [discord_client_instance.client.user]
+
         # Call the handler
         await on_message(mock_message)
 
@@ -146,6 +149,39 @@ class TestDiscordClientSetupHandlers:
         # Create a mock message from the bot itself
         mock_message = Mock(spec=discord.Message)
         mock_message.author = discord_client_instance.client.user
+
+        # Call the handler
+        await on_message(mock_message)
+
+        # Verify the message was NOT added to the queue
+        assert discord_client_instance._message_queue.empty()
+
+    @pytest.mark.asyncio
+    async def test_on_message_handler_ignores_messages_without_mentions(
+        self, discord_client_instance
+    ):
+        """Test that on_message handler ignores messages where the bot is not mentioned."""
+        # Get the on_message handler
+        on_message = None
+        for call in discord_client_instance.client.event.call_args_list:
+            func = call[0][0]
+            if func.__name__ == "on_message":
+                on_message = func
+                break
+
+        assert on_message is not None
+
+        # Create a mock message from another user
+        mock_message = Mock(spec=discord.Message)
+        mock_message.author = Mock()
+        mock_message.author.id = 123
+
+        # Ensure the message is not from the bot itself
+        discord_client_instance.client.user = Mock()
+        discord_client_instance.client.user.id = 456
+
+        # Ensure the bot is NOT mentioned in the message
+        mock_message.mentions = []
 
         # Call the handler
         await on_message(mock_message)
