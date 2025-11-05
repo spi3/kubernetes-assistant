@@ -43,6 +43,10 @@ class DiscordClient:
             if message.author == self.client.user:
                 return
 
+            # Only process messages where the bot is mentioned
+            if self.client.user not in message.mentions:
+                return
+
             await self._message_queue.put(message)
 
     async def start(self) -> None:
